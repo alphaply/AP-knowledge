@@ -1,73 +1,102 @@
 {% extends 'base.html' %}
+{% load mptt_tags %}
 
 {% block content %}
-<div class="row mt-3">
+<div class="row">
     <div class="col-md-3 d-none d-md-block">
-        <div class="sticky-top" style="top: 80px; max-height: 80vh; overflow-y: auto;">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white fw-bold py-3">文檔目錄</div>
-                <div class="list-group list-group-flush list-group-sm">
-                    {% for item in nav_data %}
-                        <div class="list-group-item bg-light fw-bold text-muted small">{{ item.cat.name_zh }}</div>
-                        {% for art in item.articles %}
-                        <a href="{% url 'doc_detail' art.id %}" 
-                           class="list-group-item list-group-item-action border-0 ps-4 {% if art.id == article.id %}active fw-bold{% endif %}">
-                            {{ art.title }}
-                        </a>
-                        {% endfor %}
-                    {% endfor %}
+        <div class="list-group sticky-top" style="top: 20px;">
+            <div class="list-group-item bg-light fw-bold">目录导航</div>
+            {% recursetree root_categories %}
+                <div class="list-group-item border-0 p-1 ps-3">
+                    {{ node.name_zh }}
+                    {% if not node.is_leaf_node %}
+                         <div class="ms-2 border-start ps-2">{{ children }}</div>
+                    {% endif %}
                 </div>
-            </div>
+            {% endrecursetree %}
         </div>
     </div>
 
-    <div class="col-md-9 col-lg-7">
-        <div class="card shadow-sm p-4 p-md-5 mb-5">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb small text-muted">
-                    <li class="breadcrumb-item"><a href="{% url 'index' %}">首頁</a></li>
-                    <li class="breadcrumb-item">{{ article.category.name_zh }}</li>
-                    <li class="breadcrumb-item active">{{ article.title }}</li>
-                </ol>
-            </nav>
+    <div class="col-md-9">
+        <div class="card shadow-sm p-4 mb-4">
+            <h1 class="mb-3">{{ article.title }}</h1>
 
-            <h1 class="fw-bold mb-3 text-dark">{{ article.title }}</h1>
-            <div class="d-flex align-items-center mb-4 text-muted small border-bottom pb-3">
-                <span class="me-3"><i class="bi bi-clock"></i> {{ article.updated_at|date:"Y-m-d" }} 更新</span>
-                <span class="me-3"><i class="bi bi-eye"></i> {{ article.views }} 次閱讀</span>
-                
-                <div class="ms-auto">
+            <div class="d-flex justify-content-between mb-4 border-bottom pb-2">
+                <div class="text-muted small">
+                    分类: {{ article.category.name_zh }} | 更新: {{ article.updated_at|date:"Y-m-d" }}
+                </div>
+                <div>
                     {% for trans in translations %}
-                        <a href="{% url 'doc_detail' trans.id %}" class="btn btn-outline-primary btn-sm rounded-pill">
-                            <i class="bi bi-translate"></i> 切換至 {{ trans.get_language_display }}
+                        <a href="{% url 'doc_detail' trans.id %}" class="badge bg-primary text-decoration-none">
+                            {{ trans.get_language_display }}
                         </a>
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="article-body markdown-body">
+            <div class="markdown-body">
                 {{ article.content_html|safe }}
             </div>
-        </div>
-    </div>
 
-    <div class="col-lg-2 d-none d-lg-block">
-        <div class="sticky-top" style="top: 80px;">
-            <h6 class="fw-bold text-muted mb-3 ps-2 border-start border-4 border-primary">本頁索引</h6>
-            <div class="small toc-content">
-                {{ article.toc|safe }}
+            {% if article.attachment %}
+            <div class="alert alert-info mt-4 d-flex align-items-center">
+                <i class="bi bi-paperclip fs-3 me-3"></i>
+                <div>
+                    <strong>附件下载：</strong>
+                    <a href="{{ article.attachment.url }}" target="_blank" class="text-decoration-underline">
+                        {{ article.filename }}
+                    </a>
+                </div>
             </div>
+            {% endif %}
+        </div>
+
+        <div class="card shadow-sm p-4">
+            <h4 class="mb-4">文章评论</h4>
+
+            {% for comment in comments %}
+            <div class="d-flex mb-3 border-bottom pb-3">
+                <div class="flex-shrink-0">
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        {{ comment.nickname|slice:":1" }}
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h6 class="mt-0 fw-bold">{{ comment.nickname }} <small class="text-muted fw-normal">{{ comment.created_at|date:"Y-m-d H:i" }}</small></h6>
+                    <p class="mb-1">{{ comment.content }}</p>
+
+                    {% if comment.admin_reply %}
+                    <div class="alert alert-success py-2 mt-2 mb-0">
+                        <i class="bi bi-person-badge-fill me-1"></i>
+                        <strong>管理员回复：</strong> {{ comment.admin_reply }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">暂无评论，欢迎留言！</p>
+            {% endfor %}
+
+            <hr>
+            <h5 class="mb-3">发表评论</h5>
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-6">
+                    {{ comment_form.nickname }}
+                </div>
+                <div class="col-12">
+                    {{ comment_form.content }}
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        {{ comment_form.captcha }}
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">提交评论</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
-<link href="https://cdn.bootcdn.net/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css" rel="stylesheet">
-<style>
-    .markdown-body { font-family: inherit; font-size: 1rem; line-height: 1.7; color: #2c3e50; }
-    .markdown-body h1, .markdown-body h2 { border-bottom: none; color: #2c3e50; }
-    .toc-content ul { padding-left: 0; list-style: none; }
-    .toc-content li { margin-bottom: 0.5rem; }
-    .toc-content a { text-decoration: none; color: #7f8c8d; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .toc-content a:hover { color: #3498db; transform: translateX(5px); transition: all 0.2s; }
-</style>
 {% endblock %}

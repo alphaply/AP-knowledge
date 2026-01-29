@@ -1,15 +1,18 @@
-/* 修复 mdeditor 在 Django Admin 中的弹窗错位问题 */
-.modal-backdrop {
-    z-index: 1001 !important; /* 降低遮罩层层级 */
+/* 修复 mdeditor 弹窗层级 */
+.modal-backdrop { z-index: 1001 !important; }
+.modal { z-index: 1002 !important; }
+
+/* 修复 Django Taggit 或其他输入框 label 溢出/错位的问题 */
+.form-row {
+    overflow: visible !important; /* 关键：允许内容溢出容器 */
 }
-.modal {
-    z-index: 1002 !important; /* 确保弹窗在遮罩层之上 */
+/* 针对 Django 5.x Admin 的字段修复 */
+.aligned label {
+    display: inline-block;
+    padding: 4px 10px 0 0;
+    float: left;
+    width: 10em; /* 调整标签宽度 */
+    word-wrap: break-word;
 }
-/* 修复输入框在某些情况下无法点击的问题 */
-.editor-toolbar {
-    z-index: 999 !important;
-}
-/* 强制让弹窗内容居中且显示正常 */
-.modal-dialog {
-    margin-top: 10vh !important;
-}
+/* 修复 MPTT 缩进显示 */
+.mptt-admin-filter { margin-bottom: 20px; }

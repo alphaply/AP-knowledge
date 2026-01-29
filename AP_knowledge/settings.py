@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from django.utils.translation import gettext_lazy as _
+
 # 构建项目根目录路径
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,8 +26,9 @@ INSTALLED_APPS = [
 
     # 第三方库
     'captcha',  # 验证码
-    'taggit',     # 新增：标签
-    'mdeditor',   # 新增：Markdown编辑器
+    'taggit',  # 新增：标签
+    'mdeditor',  # 新增：Markdown编辑器
+    'mptt',
     # 你的应用
     'knowledge',  # FAQ
     'feedback',  # 留言板
@@ -34,6 +37,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',  # 防止跨站攻击
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -78,18 +82,25 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # 【重要】国际化设置
-LANGUAGE_CODE = 'zh-hans'  # 中文
+LANGUAGE_CODE = 'zh'  # 中文
+LANGUAGES = [
+    ('zh-hans', _('简体中文')),
+    ('zh-hant', _('繁體中文')),
+    ('en', _('English')),
+]
 TIME_ZONE = 'Asia/Shanghai'  # 时区
 USE_I18N = True
 USE_TZ = True
 
 # 静态文件配置 (CSS/JS)
 STATIC_URL = 'static/'
-# 新增这行，让 Django 知道去根目录的 static 找文件
-STATICFILES_DIRS = [ BASE_DIR / "static" ]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 # 默认主键字段类型
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',  # 存放翻译文件的目录
+]
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
