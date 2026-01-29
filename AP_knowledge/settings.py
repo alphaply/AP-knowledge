@@ -1,45 +1,35 @@
 import os
 from pathlib import Path
-
 from django.utils.translation import gettext_lazy as _
 
-# 构建项目根目录路径
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# 安全密钥 (实习任务可以先写死，正式上线建议用环境变量)
 SECRET_KEY = 'django-insecure-test-key-replace-this-in-production'
-
-# 调试模式 (开发时开启，出错能看到详细信息)
 DEBUG = True
-
-# 允许访问的主机 (允许局域网访问，方便以后给同事看)
 ALLOWED_HOSTS = ['*']
 
-# 【重要】已安装的应用
 INSTALLED_APPS = [
+    'modeltranslation', # 必须在 admin 之前
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # 第三方库
-    'captcha',  # 验证码
-    'taggit',  # 新增：标签
-    'mdeditor',  # 新增：Markdown编辑器
-    'mptt',
-    # 你的应用
-    'knowledge',  # FAQ
-    'feedback',  # 留言板
+    'captcha',
+    'taggit',
+    'martor',     # 编辑器
+    'imagekit',   # 图片处理
+    'mptt',       # 多级分类
+    'knowledge',
+    'feedback',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware', # 即使做纯中文，这个也建议留着，防报错
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # 防止跨站攻击
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -50,7 +40,7 @@ ROOT_URLCONF = 'AP_knowledge.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # 【重要】指向你的 templates 文件夹
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -65,7 +55,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'AP_knowledge.wsgi.application'
 
-# 数据库 (默认使用 sqlite3，无需配置)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -73,34 +62,44 @@ DATABASES = {
     }
 }
 
-# 密码验证 (默认即可)
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
-# 【重要】国际化设置
-LANGUAGE_CODE = 'zh'  # 中文
-LANGUAGES = [
-    ('zh-hans', _('简体中文')),
-    ('zh-hant', _('繁體中文')),
-    ('en', _('English')),
-]
-TIME_ZONE = 'Asia/Shanghai'  # 时区
+# === 国际化配置 (全中文) ===
+LANGUAGE_CODE = 'zh-hans'
+TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 USE_TZ = True
 
-# 静态文件配置 (CSS/JS)
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
-# 默认主键字段类型
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# modeltranslation 默认设置
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'zh-hans'
+LANGUAGES = (
+    ('zh-hans', '简体中文'),
+    # 暂时隐藏其他语言，集中精力做好中文
+    # ('en', 'English'),
+)
 
-LOCALE_PATHS = [
-    BASE_DIR / 'locale',  # 存放翻译文件的目录
-]
-MEDIA_ROOT = BASE_DIR / 'media'
+# === 静态文件与媒体文件 ===
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [ BASE_DIR / "static" ]
+
+# 必须配置 Media，否则图片上传后无法显示
 MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# === Martor 编辑器配置 (修复上传问题) ===
+# 这里的路径必须是相对于 MEDIA_ROOT 的
+MARTOR_UPLOAD_PATH = 'images/uploads'
+MARTOR_UPLOAD_URL = '/media/images/uploads/' # 前端访问路径
+MARTOR_ENABLE_CONFIGS = {
+    'emoji': 'true',
+    'imgur': 'false', # 关闭 imgur，使用本地上传
+    'mention': 'false',
+    'jquery': 'true', # 必须开启，否则上传插件不工作
+    'living': 'false',
+    'spellcheck': 'false',
+    'hljs': 'true',
+}
+# 让工具栏显示标签，方便识别
+MARTOR_ENABLE_LABEL = True
+
+# 默认主键
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = 'SAMEORIGIN'

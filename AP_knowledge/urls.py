@@ -10,7 +10,12 @@ from feedback.views import feedback_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('captcha/', include('captcha.urls')),
-    path('mdeditor/', include('mdeditor.urls')),
+
+    # 【新增 1】语言切换功能的路由 (解决 set_language 报错)
+    path('i18n/', include('django.conf.urls.i18n')),
+
+    # 【新增 2】Martor 编辑器的路由 (V3.0 升级)
+    path('martor/', include('martor.urls')),
 
     # 首页
     path('', doc_index, name='index'),

@@ -1,102 +1,133 @@
 {% extends 'base.html' %}
 {% load mptt_tags %}
+{% load martortags %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-3 d-none d-md-block">
-        <div class="list-group sticky-top" style="top: 20px;">
-            <div class="list-group-item bg-light fw-bold">目录导航</div>
-            {% recursetree root_categories %}
-                <div class="list-group-item border-0 p-1 ps-3">
-                    {{ node.name_zh }}
-                    {% if not node.is_leaf_node %}
-                         <div class="ms-2 border-start ps-2">{{ children }}</div>
-                    {% endif %}
+        <div class="sticky-top" style="top: 80px;">
+            {% if article.toc %}
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-light fw-bold border-0">文章目录</div>
+                <div class="card-body p-0 small">
+                    <div class="toc-content p-3">
+                        {{ article.toc|safe }}
+                    </div>
                 </div>
-            {% endrecursetree %}
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light fw-bold border-0">知识库分类</div>
+                <div class="list-group list-group-flush">
+                    {% recursetree root_categories %}
+                        <div class="list-group-item border-0 p-1 ps-3">
+                            <i class="bi bi-folder2-open me-1 text-warning"></i> {{ node.name }}
+                            {% if not node.is_leaf_node %}
+                                <div class="ms-3 border-start ps-2 border-2">
+                                    {{ children }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endrecursetree %}
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="col-md-9">
-        <div class="card shadow-sm p-4 mb-4">
-            <h1 class="mb-3">{{ article.title }}</h1>
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h1 class="mb-3 fw-bold text-dark">{{ article.title }}</h1>
 
-            <div class="d-flex justify-content-between mb-4 border-bottom pb-2">
-                <div class="text-muted small">
-                    分类: {{ article.category.name_zh }} | 更新: {{ article.updated_at|date:"Y-m-d" }}
-                </div>
-                <div>
-                    {% for trans in translations %}
-                        <a href="{% url 'doc_detail' trans.id %}" class="badge bg-primary text-decoration-none">
-                            {{ trans.get_language_display }}
-                        </a>
-                    {% endfor %}
-                </div>
+            <div class="d-flex align-items-center mb-4 border-bottom pb-3 text-muted small flex-wrap">
+                <span class="me-3">
+                    <i class="bi bi-folder"></i> 分类:
+                    <span class="badge bg-secondary">{{ article.category.name }}</span>
+                </span>
+                <span class="me-3"><i class="bi bi-clock"></i> 更新: {{ article.updated_at|date:"Y-m-d" }}</span>
+                <span class="me-3"><i class="bi bi-eye"></i> 阅读: {{ article.views }}</span>
             </div>
 
             <div class="markdown-body">
                 {{ article.content_html|safe }}
             </div>
 
-            {% if article.attachment %}
-            <div class="alert alert-info mt-4 d-flex align-items-center">
-                <i class="bi bi-paperclip fs-3 me-3"></i>
-                <div>
-                    <strong>附件下载：</strong>
-                    <a href="{{ article.attachment.url }}" target="_blank" class="text-decoration-underline">
-                        {{ article.filename }}
+            {% if article.attachments.exists %}
+            <div class="mt-5 pt-3 border-top">
+                <h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-paperclip"></i> 附件下载</h6>
+                <div class="list-group">
+                    {% for file in article.attachments.all %}
+                    <a href="{{ file.file.url }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <i class="bi bi-file-earmark-arrow-down me-3 fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-bold">{{ file.name }}</div>
+                            <small class="text-muted">{{ file.file.size|filesizeformat }}</small>
+                        </div>
                     </a>
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
         </div>
 
-        <div class="card shadow-sm p-4">
-            <h4 class="mb-4">文章评论</h4>
+        <div class="card shadow-sm p-4 border-0">
+            <h4 class="mb-4 fw-bold">评论留言</h4>
 
             {% for comment in comments %}
-            <div class="d-flex mb-3 border-bottom pb-3">
+            <div class="d-flex mb-4">
                 <div class="flex-shrink-0">
-                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        {{ comment.nickname|slice:":1" }}
-                    </div>
+                    <img src="{{ comment.avatar_url }}" class="rounded-circle shadow-sm" width="50" height="50" alt="Avatar">
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <h6 class="mt-0 fw-bold">{{ comment.nickname }} <small class="text-muted fw-normal">{{ comment.created_at|date:"Y-m-d H:i" }}</small></h6>
-                    <p class="mb-1">{{ comment.content }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mt-0 fw-bold mb-0">{{ comment.display_name }}</h6>
+                        <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <p class="mb-1 mt-2 text-secondary">{{ comment.content }}</p>
 
                     {% if comment.admin_reply %}
-                    <div class="alert alert-success py-2 mt-2 mb-0">
-                        <i class="bi bi-person-badge-fill me-1"></i>
-                        <strong>管理员回复：</strong> {{ comment.admin_reply }}
+                    <div class="bg-light p-3 rounded mt-2 border-start border-4 border-primary">
+                        <strong class="text-primary d-block mb-1"><i class="bi bi-patch-check-fill"></i> 官方回复:</strong>
+                        {{ comment.admin_reply }}
                     </div>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-            <p class="text-muted">暂无评论，欢迎留言！</p>
+            <p class="text-muted text-center py-4 bg-light rounded">暂无评论，欢迎抢沙发！</p>
             {% endfor %}
 
-            <hr>
-            <h5 class="mb-3">发表评论</h5>
+            <hr class="my-5">
+            <h5 class="mb-3 fw-bold">发表评论</h5>
             <form method="post" class="row g-3">
                 {% csrf_token %}
                 <div class="col-md-6">
-                    {{ comment_form.nickname }}
+                    <label class="form-label">邮箱地址 (用于生成头像，保密)</label>
+                    {{ comment_form.email }}
                 </div>
                 <div class="col-12">
+                     <label class="form-label">评论内容</label>
                     {{ comment_form.content }}
                 </div>
                 <div class="col-md-6">
+                    <label class="form-label">验证码 (点击图片刷新)</label>
                     <div class="input-group">
                         {{ comment_form.captcha }}
                     </div>
                 </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">提交评论</button>
+                <div class="col-12 mt-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2">提交评论</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+    /* 简单的 TOC 样式 */
+    .toc-content ul { padding-left: 1.2rem; list-style: none; }
+    .toc-content li { margin-bottom: 0.5rem; }
+    .toc-content a { text-decoration: none; color: #666; font-size: 0.9rem; }
+    .toc-content a:hover { color: #0d6efd; text-decoration: underline; }
+</style>
 {% endblock %}

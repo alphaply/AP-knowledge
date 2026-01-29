@@ -1,16 +1,26 @@
 from django.contrib import admin
-from mptt.admin import DraggableMPTTAdmin  # 引入拖拽排序
-from .models import Category, Article, Comment
-from django.utils.html import format_html
+from mptt.admin import DraggableMPTTAdmin
+from modeltranslation.admin import TranslationAdmin, TranslationTabularInline  # 多语言支持
+from .models import Category, Article, Attachment, Comment
 
 
-@admin.register(Category)
-class CategoryAdmin(DraggableMPTTAdmin):
-    # 使用 mptt 的树状展示
-    list_display = ('tree_actions', 'indented_title', 'name_zh', 'name_en')
+# 1. 分类管理 (多语言 + 树状拖拽)
+# 需要同时继承 DraggableMPTTAdmin 和 TranslationAdmin，注意顺序
+class CategoryAdmin(DraggableMPTTAdmin, TranslationAdmin):
+    list_display = ('tree_actions', 'indented_title',)
     list_display_links = ('indented_title',)
 
 
+admin.site.register(Category, CategoryAdmin)
+
+
+# 2. 附件内联 (在文章页直接添加附件)
+class AttachmentInline(admin.TabularInline):
+    model = Attachment
+    extra = 1
+
+
+# 3. 评论内联
 class CommentInline(admin.StackedInline):
     model = Comment
     extra = 0
@@ -18,56 +28,19 @@ class CommentInline(admin.StackedInline):
     classes = ['collapse']
 
 
+# 4. 文章管理 (多语言支持)
 @admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'language', 'category_name', 'group_id_short', 'attachment_icon')
-    list_filter = ('language', 'category', 'is_public')
+class ArticleAdmin(TranslationAdmin):
+    list_display = ('title', 'category', 'is_public', 'created_at')
+    list_filter = ('category', 'is_public')
     search_fields = ('title', 'content')
-    inlines = [CommentInline]  # 在文章页直接管理评论
+    inlines = [AttachmentInline, CommentInline]
 
-    # 注入 CSS 修复
+    # Martor 编辑器在 Admin 中需要的 Media
     class Media:
-        css = {'all': ('css/admin_fix.css',)}
-
-    def category_name(self, obj):
-        return obj.category.name_zh
-
-    category_name.short_description = "分类"
-
-    def group_id_short(self, obj):
-        return str(obj.group_id)[:8] + "..."
-
-    group_id_short.short_description = "关联ID"
-
-    def attachment_icon(self, obj):
-        if obj.attachment:
-            return "✅ 有"
-        return "-"
-
-    attachment_icon.short_description = "附件"
-
-    # === 核心优化：一键复制为其他语言 ===
-    actions = ['copy_as_new_lang']
-
-    @admin.action(description='[工具] 复制所选文章(用于创建多语言版)')
-    def copy_as_new_lang(self, request, queryset):
-        for obj in queryset:
-            obj.pk = None  # 清空主键，代表新对象
-            obj.title = f"{obj.title} (Copy)"
-            obj.is_public = False  # 默认不公开，防误触
-            obj.save()
-            # 注意：Tags 需要单独复制
-        self.message_user(request, f"已复制 {queryset.count()} 篇文章，请进入编辑并修改语言。")
+        css = {'all': ('css/admin_fix.css',)}  # 之前修 bug 的 css 还是带着比较好
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('nickname', 'article', 'short_content', 'admin_reply_status', 'created_at')
-    list_filter = ('is_public', 'created_at')
-    readonly_fields = ('ip_address', 'created_at')
-
-    def short_content(self, obj):
-        return obj.content[:20] + "..."
-
-    def admin_reply_status(self, obj):
-        return "✅ 已回" if obj.admin_reply else "❌ 未回"
+    list_display = ('email', 'display_name', 'article', 'created_at', 'is_public')

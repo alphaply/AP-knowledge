@@ -3,26 +3,26 @@
 
 {% block content %}
 <div class="row justify-content-center mb-5">
-    <div class="col-md-8">
-        <form action="{% url 'search' %}" method="get" class="d-flex shadow-sm">
-            <input type="text" name="q" class="form-control form-control-lg border-0" placeholder="搜索知识库...">
-            <input type="hidden" name="lang" value="{{ current_lang }}">
-            <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search"></i></button>
+    <div class="col-md-8 text-center">
+        <h2 class="fw-bold mb-3">需要什么帮助？</h2>
+        <form action="{% url 'search' %}" method="get" class="d-flex shadow-sm mt-4">
+            <input type="text" name="q" class="form-control form-control-lg border-0 px-4" placeholder="搜索文档、错误代码...">
+            <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search"></i> 搜索</button>
         </form>
     </div>
 </div>
 
 <div class="row g-4">
     <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white fw-bold"><i class="bi bi-diagram-3"></i> 知识分类</div>
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-diagram-3-fill text-primary"></i> 知识分类</div>
             <div class="card-body">
-                <ul class="list-unstyled">
+                <ul class="list-group list-group-flush">
                     {% recursetree categories %}
-                        <li class="mb-2">
-                            <span class="fw-bold text-dark">{{ node.name_zh }}</span>
+                        <li class="list-group-item border-0 px-0">
+                            <span class="fw-bold text-dark"><i class="bi bi-caret-right-fill text-secondary small"></i> {{ node.name }}</span>
                             {% if not node.is_leaf_node %}
-                                <ul class="list-unstyled ms-3 mt-1 border-start ps-2 border-2">
+                                <ul class="list-group mt-2 border-start ps-3 border-2">
                                     {{ children }}
                                 </ul>
                             {% endif %}
@@ -34,15 +34,15 @@
     </div>
 
     <div class="col-md-5">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white fw-bold"><i class="bi bi-fire text-danger"></i> 热门推荐</div>
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-fire text-danger"></i> 热门推荐</div>
             <div class="list-group list-group-flush">
                 {% for art in hot_articles %}
-                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1 text-truncate">{{ art.title }}</h6>
+                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action py-3 border-0 border-bottom">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <h6 class="mb-0 text-truncate text-dark" style="max-width: 85%;">{{ art.title }}</h6>
+                        <small class="text-muted"><i class="bi bi-eye"></i> {{ art.views }}</small>
                     </div>
-                    <small class="text-muted"><i class="bi bi-eye"></i> {{ art.views }}</small>
                 </a>
                 {% endfor %}
             </div>
@@ -50,12 +50,12 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-light">
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-tags-fill text-success"></i> 热门标签</div>
             <div class="card-body">
-                <h5 class="card-title mb-3"><i class="bi bi-tags"></i> 标签云</h5>
                 <div>
                     {% for tag in tags %}
-                        <span class="badge bg-secondary me-1 mb-2">{{ tag.name }}</span>
+                        <a href="#" class="badge bg-light text-dark border me-1 mb-2 text-decoration-none">{{ tag.name }}</a>
                     {% endfor %}
                 </div>
             </div>
