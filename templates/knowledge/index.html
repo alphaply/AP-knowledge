@@ -2,64 +2,183 @@
 {% load mptt_tags %}
 
 {% block content %}
-<div class="row justify-content-center mb-5">
-    <div class="col-md-8 text-center">
-        <h2 class="fw-bold mb-3">需要什么帮助？</h2>
-        <form action="{% url 'search' %}" method="get" class="d-flex shadow-sm mt-4">
-            <input type="text" name="q" class="form-control form-control-lg border-0 px-4" placeholder="搜索文档、错误代码...">
-            <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search"></i> 搜索</button>
-        </form>
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-diagram-3-fill text-primary"></i> 知识分类</div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% recursetree categories %}
-                        <li class="list-group-item border-0 px-0">
-                            <span class="fw-bold text-dark"><i class="bi bi-caret-right-fill text-secondary small"></i> {{ node.name }}</span>
-                            {% if not node.is_leaf_node %}
-                                <ul class="list-group mt-2 border-start ps-3 border-2">
-                                    {{ children }}
-                                </ul>
-                            {% endif %}
-                        </li>
-                    {% endrecursetree %}
-                </ul>
-            </div>
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8 text-center">
+            <form action="{% url 'search' %}" method="get" class="d-flex shadow-sm mt-4">
+                <input type="text" name="q" class="form-control form-control-lg border-0 px-4"
+                       placeholder="搜索文档..." required>
+                <button class="btn btn-primary px-4" type="submit"><i class="bi bi-search"></i></button>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-5">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-fire text-danger"></i> 热门推荐</div>
-            <div class="list-group list-group-flush">
-                {% for art in hot_articles %}
-                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action py-3 border-0 border-bottom">
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <h6 class="mb-0 text-truncate text-dark" style="max-width: 85%;">{{ art.title }}</h6>
-                        <small class="text-muted"><i class="bi bi-eye"></i> {{ art.views }}</small>
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>知识分类</span>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-light text-secondary" id="btn-expand-all" title="展开所有">
+                            <i class="bi bi-arrows-expand"></i></button>
+                        <button type="button" class="btn btn-light text-secondary" id="btn-collapse-all"
+                                title="折叠所有"><i class="bi bi-arrows-collapse"></i></button>
                     </div>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% recursetree categories %}
+                        <div class="list-group-item border-0 p-0">
+                            <div class="d-flex align-items-center">
+                                {% if not node.is_leaf_node %}
+                                    <a class="p-2 text-dark text-decoration-none category-toggle"
+                                       data-bs-toggle="collapse"
+                                       href="#cat-{{ node.id }}"
+                                       role="button"
+                                       aria-expanded="{% if node.id in expanded_ids %}true{% else %}false{% endif %}">
+                                        <i class="bi bi-chevron-down small"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="p-2 ms-3"></span>
+                                {% endif %}
 
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-white">
-            <div class="card-header bg-white fw-bold py-3"><i class="bi bi-tags-fill text-success"></i> 热门标签</div>
-            <div class="card-body">
-                <div>
-                    {% for tag in tags %}
-                        <a href="#" class="badge bg-light text-dark border me-1 mb-2 text-decoration-none">{{ tag.name }}</a>
-                    {% endfor %}
+                                <a href="{% url 'category_detail' node.id %}"
+                                   class="text-decoration-none text-dark flex-grow-1 py-2 {% if current_category.id == node.id %}fw-bold text-primary{% endif %}">
+                                    {{ node.name }}
+                                </a>
+                            </div>
+
+                            {% if not node.is_leaf_node %}
+                                <div class="collapse ms-3 border-start ps-2 category-collapse {% if node.id in expanded_ids %}show{% endif %}"
+                                     id="cat-{{ node.id }}">
+                                    {{ children }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endrecursetree %}
                 </div>
             </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold"><i class="bi bi-tags"></i> 热门标签</div>
+                <div class="card-body">
+                    {% if tags %}
+                        {% for tag in tags %}
+                            <a href="{% url 'tag_detail' tag.slug %}"
+                               class="badge bg-light text-dark border text-decoration-none mb-1 me-1">
+                                {{ tag.name }} ({{ tag.num_times }})
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">暂无标签</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if not current_category %}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white fw-bold text-danger"><i class="bi bi-fire"></i> 热门推荐</div>
+                    <div class="list-group list-group-flush">
+                        {% for art in hot_articles %}
+                            <a href="{% url 'doc_detail' art.id %}"
+                               class="list-group-item list-group-item-action border-0 px-3 py-2 text-truncate">
+                                <span class="badge bg-light text-secondary me-1">{{ forloop.counter }}</span> {{ art.title }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold text-success"><i class="bi bi-shuffle"></i> 随机浏览</div>
+                    <div class="list-group list-group-flush">
+                        {% for art in random_articles %}
+                            <a href="{% url 'doc_detail' art.id %}"
+                               class="list-group-item list-group-item-action border-0 px-3 py-2 text-truncate">
+                                <i class="bi bi-file-text me-2 text-muted"></i> {{ art.title }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                <h4 class="fw-bold border-start border-4 border-primary ps-3 mb-0">{{ title|default:"全部文档" }}</h4>
+                <span class="text-muted small">共 {{ page_obj.paginator.count }} 篇</span>
+            </div>
+
+            <div class="list-group shadow-sm mb-5">
+                {% for art in page_obj %}
+                    <a href="{% url 'doc_detail' art.id %}"
+                       class="list-group-item list-group-item-action p-4 border-0 border-bottom align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1 fw-bold text-primary">{{ art.title }}</h5>
+                            <small class="text-muted text-nowrap">{{ art.created_at|date:"Y-m-d" }}</small>
+                        </div>
+                        <p class="mb-1 text-secondary text-truncate" style="max-width: 90%;">
+                            {{ art.content|striptags|truncatechars:100 }}
+                        </p>
+                        <div class="small text-muted mt-2">
+                            <span class="badge bg-secondary me-2">{{ art.category.name }}</span>
+                            {% if art.cover_style == 'show' and art.cover %}
+                                <i class="bi bi-image text-success"></i> 有封面
+                            {% endif %}
+                            {% for tag in art.tags.all %}
+                                <span class="text-secondary ms-2">#{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="text-center py-5 text-muted">暂无相关文档</div>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                        {% endif %}
+
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
         </div>
     </div>
-</div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const collapses = document.querySelectorAll('.category-collapse');
+            // 初始化 Collapse 实例，但不强制 toggle，保持 HTML 中的 show 状态
+            const bsCollapses = Array.from(collapses).map(el => new bootstrap.Collapse(el, {toggle: false}));
+
+            document.getElementById('btn-expand-all').addEventListener('click', function () {
+                bsCollapses.forEach(c => c.show());
+            });
+
+            document.getElementById('btn-collapse-all').addEventListener('click', function () {
+                bsCollapses.forEach(c => c.hide());
+            });
+        });
+    </script>
 {% endblock %}

@@ -7,3 +7,11 @@ python manage.py createsuperuser
 
 python manage.py runserver
 ```
+
+python manage.py export_docs
+
+
+
+cd dist
+python -m http.server
+

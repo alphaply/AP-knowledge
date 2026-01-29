@@ -5,8 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.10"
 dependencies = [
     "django>=5.2.10",
+    "django-ckeditor",
     "django-imagekit>=6.0.0",
-    "django-mdeditor>=0.1.20",
     "django-modeltranslation>=0.19.19",
     "django-mptt>=0.18.0",
     "django-simple-captcha>=0.6.3",

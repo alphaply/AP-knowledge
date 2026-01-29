@@ -4,13 +4,16 @@
 <div class="row justify-content-center">
     <div class="col-md-10">
         <h3 class="mb-4">
-            搜尋結果: <span class="text-primary">"{{ query }}"</span>
+            搜索结果: <span class="text-primary">"{{ query }}"</span>
+            {% if page_obj %}
+            <small class="text-muted fs-6 ms-2">共 {{ page_obj.paginator.count }} 条</small>
+            {% endif %}
         </h3>
 
-        {% if results %}
-            <div class="list-group shadow-sm">
-                {% for art in results %}
-                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action p-4">
+        {% if page_obj %}
+            <div class="list-group shadow-sm mb-5">
+                {% for art in page_obj %}
+                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action p-4 border-0 border-bottom">
                     <div class="d-flex w-100 justify-content-between">
                         <h5 class="mb-1 fw-bold text-primary">{{ art.title }}</h5>
                         <small class="text-muted">{{ art.updated_at|date:"Y-m-d" }}</small>
@@ -18,16 +21,52 @@
                     <p class="mb-1 text-secondary text-truncate" style="max-width: 80%;">
                         {{ art.content|striptags|truncatechars:100 }}
                     </p>
-                    <small class="text-muted"><i class="bi bi-folder"></i> {{ art.category.name_zh }}</small>
+                    <div class="small text-muted mt-2">
+                        <span class="badge bg-secondary me-2">{{ art.category.name }}</span>
+                        {% for tag in art.tags.all %}
+                            <span class="text-secondary me-1">#{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
                 </a>
                 {% endfor %}
             </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Search results pages">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                    {% endif %}
+
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">下一页</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
         {% else %}
             <div class="alert alert-warning text-center p-5 shadow-sm rounded-3">
                 <i class="bi bi-search display-1 d-block mb-3 opacity-25"></i>
-                <h4>沒有找到相關文檔</h4>
-                <p>試試更換關鍵字，或者瀏覽下方的分類。</p>
-                <a href="{% url 'index' %}" class="btn btn-outline-dark mt-3">返回首頁</a>
+                <h4>没有找到相关文档</h4>
+                <p>试试更换关键词，或者浏览首页分类。</p>
+                <a href="{% url 'index' %}" class="btn btn-outline-dark mt-3">返回首页</a>
             </div>
         {% endif %}
     </div>

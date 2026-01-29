@@ -2,34 +2,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
-# 注意这里引入的是 doc_index 等新函数
-from knowledge.views import doc_index, doc_detail, search_view
+from knowledge import views as k_views
 from feedback.views import feedback_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('captcha/', include('captcha.urls')),
-
-    # 【新增 1】语言切换功能的路由 (解决 set_language 报错)
     path('i18n/', include('django.conf.urls.i18n')),
 
-    # 【新增 2】Martor 编辑器的路由 (V3.0 升级)
-    path('martor/', include('martor.urls')),
+    # 替换 martor 为 ckeditor 的上传路由
+    path('ckeditor/', include('ckeditor_uploader.urls')),
 
-    # 首页
-    path('', doc_index, name='index'),
-
-    # 详情页 doc/1/
-    path('doc/<int:pk>/', doc_detail, name='doc_detail'),
-
-    # 搜索页
-    path('search/', search_view, name='search'),
-
-    # 留言页
+    path('', k_views.doc_index, name='index'),
+    path('category/<int:pk>/', k_views.category_detail, name='category_detail'),
+    path('tag/<slug:slug>/', k_views.tag_detail, name='tag_detail'),
+    path('doc/<int:pk>/', k_views.doc_detail, name='doc_detail'),
+    path('search/', k_views.search_view, name='search'),
     path('feedback/', feedback_view, name='feedback'),
 ]
 
-# 图片上传配置
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

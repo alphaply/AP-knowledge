@@ -8,9 +8,10 @@ class CommentForm(forms.ModelForm):
 
     class Meta:
         model = Comment
-        fields = ['email', 'content']  # 只让用户填邮箱和内容，昵称自动处理
+        fields = ['name', 'email', 'content']  # 包含姓名
         widgets = {
-            'email': forms.EmailInput(
-                attrs={'class': 'form-control', 'placeholder': 'name@example.com (将作为您的头像来源)'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': '请输入您的评论...'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '您的称呼'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'contact@email.com (保密)'}),
+            'content': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 3, 'placeholder': '请输入您的意见或建议...'}),
         }
