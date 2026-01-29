@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-lg-8 text-center">
+        <h1 class="display-5 fw-bold mb-3 text-dark">需要什麼幫助？</h1>
+        <p class="lead text-muted mb-4">搜尋錯誤代碼、產品手冊或設定指南</p>
+        
+        <form action="{% url 'search' %}" method="get" class="position-relative">
+            <div class="input-group input-group-lg shadow-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="例如：RAID 設定, 錯誤 503...">
+                <button class="btn btn-primary" type="submit">搜尋</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-fire text-danger fs-4 me-2"></i>
+            <h5 class="mb-0 fw-bold">熱門文檔</h5>
+        </div>
+        <div class="list-group shadow-sm rounded-3 overflow-hidden">
+            {% for art in hot_articles %}
+            <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <span class="text-truncate">{{ art.title }}</span>
+                <span class="badge bg-light text-secondary rounded-pill">{{ art.views }}</span>
+            </a>
+            {% empty %}
+                <div class="list-group-item text-muted">暫無數據</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-folder-fill text-warning fs-4 me-2"></i>
+            <h5 class="mb-0 fw-bold">產品分類</h5>
+        </div>
+        <div class="row g-2">
+            {% for cat in categories %}
+            <div class="col-6">
+                <div class="card h-100 text-center py-3 bg-white border-0 shadow-sm">
+                    <a href="#" class="stretched-link text-decoration-none text-dark fw-bold">
+                        {{ cat.name_zh }}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-stars text-info fs-4 me-2"></i>
+            <h5 class="mb-0 fw-bold">猜你關注</h5>
+        </div>
+        <div class="list-group shadow-sm rounded-3 overflow-hidden">
+            {% for art in random_articles %}
+            <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action">
+                <i class="bi bi-file-earmark-text text-muted me-2"></i>{{ art.title }}
+            </a>
+            {% empty %}
+                 <div class="list-group-item text-muted">暫無數據</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

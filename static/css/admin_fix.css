@@ -1,0 +1,15 @@
+/* 修复 mdeditor 在 Django Admin 中的弹窗错位问题 */
+.modal-backdrop {
+    z-index: 1001 !important; /* 降低遮罩层层级 */
+}
+.modal {
+    z-index: 1002 !important; /* 确保弹窗在遮罩层之上 */
+}
+/* 修复输入框在某些情况下无法点击的问题 */
+.editor-toolbar {
+    z-index: 999 !important;
+}
+/* 强制让弹窗内容居中且显示正常 */
+.modal-dialog {
+    margin-top: 10vh !important;
+}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-3 d-none d-md-block">
+        <div class="sticky-top" style="top: 80px; max-height: 80vh; overflow-y: auto;">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-bold py-3">文檔目錄</div>
+                <div class="list-group list-group-flush list-group-sm">
+                    {% for item in nav_data %}
+                        <div class="list-group-item bg-light fw-bold text-muted small">{{ item.cat.name_zh }}</div>
+                        {% for art in item.articles %}
+                        <a href="{% url 'doc_detail' art.id %}" 
+                           class="list-group-item list-group-item-action border-0 ps-4 {% if art.id == article.id %}active fw-bold{% endif %}">
+                            {{ art.title }}
+                        </a>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9 col-lg-7">
+        <div class="card shadow-sm p-4 p-md-5 mb-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small text-muted">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">首頁</a></li>
+                    <li class="breadcrumb-item">{{ article.category.name_zh }}</li>
+                    <li class="breadcrumb-item active">{{ article.title }}</li>
+                </ol>
+            </nav>
+
+            <h1 class="fw-bold mb-3 text-dark">{{ article.title }}</h1>
+            <div class="d-flex align-items-center mb-4 text-muted small border-bottom pb-3">
+                <span class="me-3"><i class="bi bi-clock"></i> {{ article.updated_at|date:"Y-m-d" }} 更新</span>
+                <span class="me-3"><i class="bi bi-eye"></i> {{ article.views }} 次閱讀</span>
+                
+                <div class="ms-auto">
+                    {% for trans in translations %}
+                        <a href="{% url 'doc_detail' trans.id %}" class="btn btn-outline-primary btn-sm rounded-pill">
+                            <i class="bi bi-translate"></i> 切換至 {{ trans.get_language_display }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="article-body markdown-body">
+                {{ article.content_html|safe }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-2 d-none d-lg-block">
+        <div class="sticky-top" style="top: 80px;">
+            <h6 class="fw-bold text-muted mb-3 ps-2 border-start border-4 border-primary">本頁索引</h6>
+            <div class="small toc-content">
+                {{ article.toc|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css" rel="stylesheet">
+<style>
+    .markdown-body { font-family: inherit; font-size: 1rem; line-height: 1.7; color: #2c3e50; }
+    .markdown-body h1, .markdown-body h2 { border-bottom: none; color: #2c3e50; }
+    .toc-content ul { padding-left: 0; list-style: none; }
+    .toc-content li { margin-bottom: 0.5rem; }
+    .toc-content a { text-decoration: none; color: #7f8c8d; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .toc-content a:hover { color: #3498db; transform: translateX(5px); transition: all 0.2s; }
+</style>
+{% endblock %}

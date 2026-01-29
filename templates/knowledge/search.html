@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h3 class="mb-4">
+            搜尋結果: <span class="text-primary">"{{ query }}"</span>
+        </h3>
+
+        {% if results %}
+            <div class="list-group shadow-sm">
+                {% for art in results %}
+                <a href="{% url 'doc_detail' art.id %}" class="list-group-item list-group-item-action p-4">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 fw-bold text-primary">{{ art.title }}</h5>
+                        <small class="text-muted">{{ art.updated_at|date:"Y-m-d" }}</small>
+                    </div>
+                    <p class="mb-1 text-secondary text-truncate" style="max-width: 80%;">
+                        {{ art.content|striptags|truncatechars:100 }}
+                    </p>
+                    <small class="text-muted"><i class="bi bi-folder"></i> {{ art.category.name_zh }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning text-center p-5 shadow-sm rounded-3">
+                <i class="bi bi-search display-1 d-block mb-3 opacity-25"></i>
+                <h4>沒有找到相關文檔</h4>
+                <p>試試更換關鍵字，或者瀏覽下方的分類。</p>
+                <a href="{% url 'index' %}" class="btn btn-outline-dark mt-3">返回首頁</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
