@@ -1,14 +1,15 @@
 from django.db import models
 from taggit.managers import TaggableManager
 from mptt.models import MPTTModel, TreeForeignKey
-# 替换 MartorField 为 CKEditor
-from ckeditor_uploader.fields import RichTextUploadingField
+# 替换 MartorField 为 CKEditor 5
+from django_ckeditor_5.fields import CKEditor5Field
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 from PIL import Image, ImageDraw, ImageFont
 import os
 import uuid
 from django.utils.timezone import now
+import math
 
 
 # ... (保留 upload_to_uuid 和 TextWatermark 工具类，代码与上次一致) ...
@@ -19,7 +20,7 @@ def upload_to_uuid(instance, filename):
 
 
 class TextWatermark:
-    def __init__(self, text="AP Memory", opacity=128):
+    def __init__(self, text="Apmemory", opacity=100):
         self.text = text
         self.opacity = opacity
 
@@ -28,14 +29,35 @@ class TextWatermark:
         watermark = Image.new('RGBA', img.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(watermark)
         try:
-            font = ImageFont.truetype("arial.ttf", 36)
+            font = ImageFont.truetype("arial.ttf", 40)
         except IOError:
             font = ImageFont.load_default()
-        text_width = int(draw.textlength(self.text, font=font))
-        text_height = int(font.getbbox("A")[3])
-        x = img.width - text_width - 20
-        y = img.height - text_height - 20
-        draw.text((x, y), self.text, font=font, fill=(255, 255, 255, self.opacity))
+        text = self.text
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        
+        # 计算旋转后的对角线长度，确保足够容纳文字
+        diagonal = int(math.sqrt(text_width ** 2 + text_height ** 2))
+        
+        # 创建一个小的文本图像，用于旋转
+        text_img = Image.new('RGBA', (text_width, text_height), (0, 0, 0, 0))
+        text_draw = ImageDraw.Draw(text_img)
+        text_draw.text((0, 0), text, font=font, fill=(255, 255, 255, self.opacity))  # 白色半透明文字
+        
+        # 旋转文本图像 (约-45度倾斜)
+        rotated_text = text_img.rotate(-45, expand=1, fillcolor=(0, 0, 0, 0))
+        
+        # 确定水印位置 (多个重复的水印，覆盖整个图像)
+        pos_x_step = diagonal * 2  # 水平间距
+        pos_y_step = diagonal * 2  # 垂直间距
+        
+        # 在原图上多次放置水印
+        for offset_x in range(0, img.size[0], pos_x_step):
+            for offset_y in range(0, img.size[1], pos_y_step):
+                # 计算每个水印的位置
+                watermark.paste(rotated_text, (offset_x, offset_y), rotated_text)
+                
         return Image.alpha_composite(img, watermark).convert('RGB')
 
 
@@ -70,7 +92,10 @@ class Article(models.Model):
     category = TreeForeignKey(Category, on_delete=models.CASCADE, verbose_name="所属分类")
     title = models.CharField("标题", max_length=200)
 
-    content = RichTextUploadingField("文档内容", config_name='default')
+    # 添加摘要字段
+    summary = models.TextField("摘要", blank=True, help_text="文章摘要，如果为空则自动从内容前200个字符生成")
+
+    content = CKEditor5Field("文档内容", config_name='extends')
 
     tags = TaggableManager(blank=True)
     views = models.PositiveIntegerField("浏览量", default=0)
@@ -97,6 +122,16 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_summary(self):
+        """获取文章摘要，如果有手动输入的摘要则使用它，否则自动生成"""
+        if self.summary:
+            return self.summary
+        # 如果没有手动输入摘要，则从内容中提取前200个字符作为摘要
+        # 去除HTML标签
+        from django.utils.html import strip_tags
+        clean_content = strip_tags(self.content)
+        return clean_content[:200] + "..." if len(clean_content) > 200 else clean_content
 
 
 # ... (下面的 Attachment 和 Comment 保持不变)

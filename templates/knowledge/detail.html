@@ -1,136 +1,234 @@
-{% extends 'base.html' %}
-{% load mptt_tags %}
-
-{% block content %}
+{% extends 'base.html' %} {% load mptt_tags %} {% load tz %} {% block content %}
 <div class="row">
-    <div class="col-lg-9">
-        <div class="card shadow-sm border-0 p-4 p-md-5 mb-4">
+  <div class="col-lg-9">
+    <div class="card shadow-sm border-0 p-4 p-md-5 mb-4">
+      {% if article.cover_style == 'show' and article.cover %}
+      <img
+        src="{{ article.cover.url }}"
+        class="img-fluid rounded mb-4 w-100"
+        style="max-height: 400px; object-fit: cover"
+      />
+      {% endif %}
 
-            {% if article.cover_style == 'show' and article.cover %}
-                <img src="{{ article.cover.url }}" class="img-fluid rounded mb-4 w-100" style="max-height: 400px; object-fit: cover;">
-            {% endif %}
+      <h1 class="fw-bold mb-3 text-dark">{{ article.title }}</h1>
 
-            <h1 class="fw-bold mb-3 text-dark">{{ article.title }}</h1>
+      <div
+        class="d-flex align-items-center text-muted small mb-4 pb-3 border-bottom"
+      >
+        <span class="me-3"
+          ><i class="bi bi-folder"></i> {{ article.category.name }}</span
+        >
+        <span class="me-3"
+          ><i class="bi bi-calendar"></i> {{ article.created_at|date:"Y-m-d" }}</span
+        >
+        <span class="me-3"
+          ><i class="bi bi-pencil-square"></i> {{ article.updated_at|date:"Y-m-d" }}</span
+        >
+        <span><i class="bi bi-eye"></i> {{ article.views }}</span>
+      </div>
 
-            <div class="d-flex align-items-center text-muted small mb-4 pb-3 border-bottom">
-                <span class="me-3"><i class="bi bi-folder"></i> {{ article.category.name }}</span>
-                <span class="me-3"><i class="bi bi-calendar"></i> {{ article.created_at|date:"Y-m-d" }}</span>
-                <span><i class="bi bi-eye"></i> {{ article.views }}</span>
+      <div class="article-content js-toc-content">
+        {{ article.content|safe }}
+      </div>
+
+      <!-- 添加浮动TOC按钮，仅在移动端显示 -->
+      <div class="d-lg-none position-fixed" style="bottom: 20px; right: 20px; z-index: 1050;">
+        <button 
+          class="btn btn-primary rounded-circle shadow p-3 d-flex align-items-center justify-content-center" 
+          type="button" 
+          data-bs-toggle="offcanvas" 
+          data-bs-target="#tocOffcanvas"
+          aria-controls="tocOffcanvas"
+          title="目录"
+          style="width: 56px; height: 56px; border: none;">
+          <i class="bi bi-list"></i>
+        </button>
+      </div>
+
+      {% if existing_attachments %}
+      <div class="mt-5 pt-3 border-top">
+        <h6 class="fw-bold mb-3 text-secondary">
+          <i class="bi bi-paperclip"></i> 附件下载
+        </h6>
+        <div class="list-group">
+          {% for file in existing_attachments %}
+          <a
+            href="{{ file.file.url }}"
+            download
+            class="list-group-item list-group-item-action d-flex align-items-center"
+          >
+            <i class="bi bi-file-earmark-arrow-down fs-4 text-primary me-3"></i>
+            <div>
+              <div class="fw-bold">{{ file.name }}</div>
+              <small class="text-muted"
+                >{{ file.file_size|filesizeformat }}</small
+              >
             </div>
-
-            <div class="article-content js-toc-content">
-                {{ article.content|safe }}
-            </div>
-
-            {% if article.attachments.exists %}
-            <div class="mt-5 pt-3 border-top">
-                <h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-paperclip"></i> 附件下载</h6>
-                <div class="list-group">
-                    {% for file in article.attachments.all %}
-                    <a href="{{ file.file.url }}" download class="list-group-item list-group-item-action d-flex align-items-center">
-                        <i class="bi bi-file-earmark-arrow-down fs-4 text-primary me-3"></i>
-                        <div>
-                            <div class="fw-bold">{{ file.name }}</div>
-                            <small class="text-muted">{{ file.file.size|filesizeformat }}</small>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
+          </a>
+          {% endfor %}
         </div>
-
-        <div class="card shadow-sm border-0 p-4">
-            <h4 class="mb-4 fw-bold">留言反馈</h4>
-            {% for comment in comments %}
-            {% endfor %}
-            <form method="post" class="row g-3 mt-4">
-                {% csrf_token %}
-                <div class="col-md-6">
-                    <label class="form-label">姓名</label>
-                    {{ comment_form.name }}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">邮箱 (保密)</label>
-                    {{ comment_form.email }}
-                </div>
-                <div class="col-12">
-                    <label class="form-label">内容</label>
-                    {{ comment_form.content }}
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">验证码</label>
-                    {{ comment_form.captcha }}
-                </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary px-5">提交留言</button>
-                </div>
-            </form>
-        </div>
+      </div>
+      {% endif %}
     </div>
 
-    <div class="col-lg-3">
-        <div class="offcanvas-lg offcanvas-end h-100" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
-            <div class="offcanvas-header border-bottom">
-                <h5 class="offcanvas-title fw-bold" id="tocOffcanvasLabel">文章导航</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+    <div class="card shadow-sm border-0 p-4">
+      <h4 class="mb-4 fw-bold">留言反馈</h4>
+      {% for comment in comments %} {% if comment.is_public %}
+      <div class="comment-item border-bottom pb-3 mb-3">
+        <div class="d-flex align-items-start">
+          <div class="flex-shrink-0 me-3">
+            <div class="position-relative" style="width: 40px; height: 40px">
+              <div
+                class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center position-absolute w-100 h-100"
+                id="default-avatar-{{ forloop.counter }}"
+              >
+                <i class="bi bi-tombstone"></i>
+              </div>
+              <img
+                src="{{ comment.avatar_url }}"
+                alt="头像"
+                class="rounded-circle position-absolute w-100 h-100"
+                style="z-index: 1"
+                onload="document.getElementById('default-avatar-{{ forloop.counter }}').style.display = 'none';"
+                onerror="this.style.display = 'none'"
+              />
             </div>
-            <div class="offcanvas-body d-block p-0 h-100">
-                <div class="sticky-top" style="top: 100px;">
-                    <a href="{% url 'index' %}" class="btn btn-outline-secondary w-100 mb-3 shadow-sm d-none d-lg-block">
-                        <i class="bi bi-arrow-left"></i> 返回列表
-                    </a>
-                    <div class="d-lg-none p-3 pb-0">
-                        <a href="{% url 'index' %}" class="btn btn-outline-secondary w-100">
-                            <i class="bi bi-arrow-left"></i> 返回知识库首页
-                        </a>
-                    </div>
-                    <div class="card shadow-sm border-0 mb-3 m-lg-0 m-3" id="toc-card" style="display:none;">
-                        <div class="card-header bg-white fw-bold border-bottom">文章目录</div>
-                        <div class="card-body p-0 small" style="max-height: 70vh; overflow-y: auto;">
-                            <div class="js-toc py-2"></div>
-                        </div>
-                    </div>
-                </div>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center mb-2">
+              <strong class="me-2"
+                >{{ comment.display_name|default:"匿名用户" }}</strong
+              >
+              <small class="text-muted"
+                >{{ comment.created_at|date:"Y-m-d H:i" }}</small
+              >
             </div>
+            <div class="comment-content">{{ comment.content|linebreaks }}</div>
+          </div>
         </div>
+      </div>
+      {% endif %} {% empty %}
+      <p class="text-muted mb-4">暂无留言，快来发表第一条留言吧！</p>
+      {% endfor %}
+      <form method="post" class="row g-3 mt-4">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <label class="form-label">姓名</label>
+          {{ comment_form.name }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">邮箱 (保密)</label>
+          {{ comment_form.email }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">内容</label>
+          {{ comment_form.content }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">验证码</label>
+          {{ comment_form.captcha }}
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary px-5">提交留言</button>
+        </div>
+      </form>
     </div>
+  </div>
+
+  <div class="col-lg-3">
+    <div
+      class="offcanvas-lg offcanvas-end h-100"
+      tabindex="-1"
+      id="tocOffcanvas"
+      aria-labelledby="tocOffcanvasLabel"
+    >
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="tocOffcanvasLabel">文章导航</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+          data-bs-target="#tocOffcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body d-block p-0 h-100">
+        <div class="sticky-top" style="top: 100px">
+          <a
+            href="{% url 'index' %}"
+            class="btn btn-outline-secondary w-100 mb-3 shadow-sm d-none d-lg-block"
+          >
+            <i class="bi bi-arrow-left"></i> 返回列表
+          </a>
+          <div class="d-lg-none p-3 pb-0">
+            <a href="{% url 'index' %}" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-arrow-left"></i> 返回知识库首页
+            </a>
+          </div>
+          <div
+            class="card shadow-sm border-0 mb-3 m-lg-0 m-3"
+            id="toc-card"
+            style="display: none"
+          >
+            <div class="card-header bg-white fw-bold border-bottom">
+              文章目录
+            </div>
+            <div
+              class="card-body p-0 small"
+              style="max-height: 70vh; overflow-y: auto"
+            >
+              <div class="js-toc py-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var headers = document.querySelectorAll('.js-toc-content h1, .js-toc-content h2, .js-toc-content h3');
-        headers.forEach(function(header, index) {
-            if (!header.id) {
-                header.id = 'heading-' + index;
-            }
-        });
-
-        tocbot.init({
-            tocSelector: '.js-toc',
-            contentSelector: '.js-toc-content',
-            headingSelector: 'h1, h2, h3',
-            hasInnerContainers: true,
-            scrollSmooth: true,
-            scrollSmoothOffset: -100,
-            headingsOffset: 100,
-            onClick: function(e) {
-                var offcanvas = document.getElementById('tocOffcanvas');
-                var bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
-                if (bsOffcanvas) {
-                    bsOffcanvas.hide();
-                }
-            }
-        });
-
-        setTimeout(function() {
-            var tocContent = document.querySelector('.js-toc').innerHTML;
-            if (tocContent.trim().length > 0 && document.querySelector('.js-toc li')) {
-                document.getElementById('toc-card').style.display = 'block';
-            }
-        }, 200);
+  document.addEventListener("DOMContentLoaded", function () {
+    var headers = document.querySelectorAll(
+      ".js-toc-content h1, .js-toc-content h2, .js-toc-content h3",
+    );
+    headers.forEach(function (header, index) {
+      if (!header.id) {
+        header.id = "heading-" + index;
+      }
     });
+
+    tocbot.init({
+      tocSelector: ".js-toc",
+      contentSelector: ".js-toc-content",
+      headingSelector: "h1, h2, h3",
+      hasInnerContainers: true,
+      scrollSmooth: true,
+      scrollSmoothOffset: -100,
+      headingsOffset: 100,
+      onClick: function (e) {
+        var offcanvas = document.getElementById("tocOffcanvas");
+        var bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
+        if (bsOffcanvas) {
+          bsOffcanvas.hide();
+        }
+      },
+    });
+
+    setTimeout(function () {
+      var tocContent = document.querySelector(".js-toc").innerHTML;
+      if (
+        tocContent.trim().length > 0 &&
+        document.querySelector(".js-toc li")
+      ) {
+        document.getElementById("toc-card").style.display = "block";
+      }
+    }, 200);
+    
+    // 为文章内容中的图片添加懒加载功能
+    const images = document.querySelectorAll('.article-content img');
+    images.forEach(img => {
+      img.setAttribute('loading', 'lazy');
+    });
+  });
 </script>
 {% endblock %}
