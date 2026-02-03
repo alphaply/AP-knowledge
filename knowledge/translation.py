@@ -7,4 +7,4 @@ class CategoryTranslationOptions(TranslationOptions):
 
 @register(Article)
 class ArticleTranslationOptions(TranslationOptions):
-    fields = ('title', 'content',) # 标题和内容需要多语言
+    fields = ('title',) # 标题需要多语言，内容不翻译

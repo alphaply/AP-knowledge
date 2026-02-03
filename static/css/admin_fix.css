@@ -1,18 +1,57 @@
 /* 修复 mdeditor 弹窗层级 */
-.modal-backdrop { z-index: 1001 !important; }
-.modal { z-index: 1002 !important; }
+.modal-backdrop {
+  z-index: 1001 !important;
+}
+.modal {
+  z-index: 1002 !important;
+}
 
 /* 修复 Django Taggit 或其他输入框 label 溢出/错位的问题 */
 .form-row {
-    overflow: visible !important; /* 关键：允许内容溢出容器 */
+  overflow: visible !important; /* 关键：允许内容溢出容器 */
 }
 /* 针对 Django 5.x Admin 的字段修复 */
 .aligned label {
-    display: inline-block;
-    padding: 4px 10px 0 0;
-    float: left;
-    width: 10em; /* 调整标签宽度 */
-    word-wrap: break-word;
+  display: inline-block;
+  padding: 4px 10px 0 0;
+  float: left;
+  width: 10em; /* 调整标签宽度 */
+  word-wrap: break-word;
 }
 /* 修复 MPTT 缩进显示 */
-.mptt-admin-filter { margin-bottom: 20px; }
+.mptp-admin-filter {
+  margin-bottom: 20px;
+}
+
+/* 限制 CKEditor 编辑器宽度 */
+.ck.ck-editor {
+  max-width: 700px !important;
+  width: 100% !important;
+}
+.ck.ck-editor__main {
+  width: 100% !important;
+}
+.ck.ck-editor__main .ck.ck-content {
+  max-width: 700px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+.ck-editor__editable {
+  max-width: 700px !important;
+  width: 100% !important;
+  min-height: 400px !important;
+}
+/* 针对 CKEditor 5 编辑器容器的更具体选择器 */
+.ck.ck-sticky-panel .ck.ck-toolbar-container {
+  max-width: 700px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+/* 确保编辑器容器在初始化时也有正确的宽度 */
+.django-ckeditor-5 .form-control {
+  display: block !important;
+  width: 100% !important;
+  max-width: 700px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}

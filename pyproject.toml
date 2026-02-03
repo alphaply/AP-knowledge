@@ -1,17 +1,16 @@
 [project]
 name = "ap-knowledge"
 version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.10"
+description = "A knowledge base for the AP."
+requires-python = ">=3.10,<3.12"
 dependencies = [
     "django>=5.2.10",
-    "django-ckeditor",
+    "django-ckeditor-5",
     "django-imagekit>=6.0.0",
     "django-modeltranslation>=0.19.19",
     "django-mptt>=0.18.0",
     "django-simple-captcha>=0.6.3",
     "django-taggit>=6.1.0",
-    "imagekit",
     "markdown>=3.10.1",
     "martor>=1.7.16",
     "pillow>=12.1.0",
